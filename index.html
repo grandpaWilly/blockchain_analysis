@@ -1,0 +1,181 @@
+<html>
+<meta charset="utf-8">
+
+<head>
+	<title>GRAPHING BLOCKCHAIN</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="http://visjs.org/dist/vis.js"></script>
+    <link href="http://visjs.org/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
+ 
+ <style type="text/css">
+    #mynetwork {
+	
+      width: 85%;
+      height: 80%;
+      border: 1px solid lightgray;
+	  background: #d3d3d3;
+    }
+  </style>
+	<style>	
+		body{
+			margin-top:30px;
+			}
+.slidecontainer {
+    width: 100%;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 15px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.4;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4CAF50;
+    cursor: pointer;
+}	
+			
+		
+	</style>
+</head>
+
+
+<body>
+<script type="text/javascript">
+	jQuery(function(){
+});
+
+
+</script>
+
+
+<div class="slidecontainer">
+<form id=SliderForm>
+  <input type="range" min="1" max="100" value="90" class="slider" id="myRange">
+</form>
+  <p>Value: <span id="blockHeight"></span></p>
+</div>
+
+
+<script>		
+	var slider = document.getElementById("myRange");
+	var output = document.getElementById("blockHeight");
+	output.innerHTML = slider.value;
+	slider.oninput = function() {
+		output.innerHTML = this.value;	
+	}
+</script>
+
+	
+<div id="mynetwork"></div>
+
+<script type="text/javascript">
+  var nodes = new vis.DataSet([
+
+  ]);
+  var edges = new vis.DataSet([
+
+  ]);
+
+  var container = document.getElementById('mynetwork');
+  var data = {
+    nodes: nodes,
+    edges: edges
+  };
+  var options = {
+	edges:{
+		dashes: true,
+		arrows: 'to',
+		length: 400,
+		font: '12px arial #ff0000',
+		scaling:{
+			label: true,
+			},
+		shadow: true,
+		smooth: true,
+		}
+	};
+  
+  
+
+  var network = new vis.Network(container, data, options);
+  
+  network.on("selectNode", function (params) { 
+        if (params.nodes.length === 1) {
+            var node = nodes.get(params.nodes[0]);
+            window.open(node.url, '_blank');
+        }
+    });
+  
+</script>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-4">
+				<div class="well">
+
+
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		$(function(){
+			var socket = io.connect();
+			
+			document.getElementById("myRange").onchange = function(e) {
+				var e = document.getElementById("myRange");
+				console.log("ASKING FOR:\t"+e.value);
+				nodes.clear();
+				edges.clear();
+				socket.emit("ask block range", e.value);
+			}
+
+			socket.on('update JSON', function(updateNodes, updateEdges){
+				console.log("GOT:\t"+updateEdges);
+				//console.log(updateEdges[0].from+"\t"+updateEdges[0].to);
+				edges.update(updateEdges);
+		//			console.log("Drawing connection: "+updateEdges[0]);
+	
+				nodes.update(updateNodes[0]);
+				nodes.update(updateNodes[1]);
+
+				//	updateEdges[0] = JSON.stringify(updateEdges[0]);
+					
+			});
+			
+			socket.on('latest block height', function(data){
+				 $("#myRange").attr('max', data);
+				document.getElementById("blockHeight").innerHTML = data;
+			});
+
+		});
+
+	
+	</script>
+	
+	
+	
+</body>
+</html>
